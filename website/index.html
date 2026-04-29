@@ -11,7 +11,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.7/js/select2.min.js"></script>
     <script src="hotdog.js"></script>
-    <!-- <script src="lemonclicker.js"></script> -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StarBox</title>
@@ -22,8 +21,8 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#ffe845"/>
-    <meta name="msapplication-TileColor" content="#dba600" />
+    <meta name="theme-color" content="#e970cb"/>
+    <meta name="msapplication-TileColor" content="#e970cb" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
     <meta name="format-detection" content="telephone=no" />
     <meta property="og:image" content="/icon_maskable_192.png" />
@@ -85,11 +84,11 @@ html {
             margin-top: 0.5em;
             margin-bottom: 0.5em;
             -webkit-text-stroke-width: 0;
-            color: var(--mod-title, #fff570);
+            color: var(--mod-title, #e970cb);
         }
 
         a {
-            color: var(--link-accent, #fff570);
+            color: var(--link-accent, white);
         }
 
         .donation form {
@@ -254,7 +253,7 @@ html {
 
 .footertext {
 	font-size:11px;
-	color: #868c95;
+	color: #d9dce3;
 	text-align: center;
 	font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -277,8 +276,8 @@ button {
     margin-top: 15px;
     border: 0;
     border-radius: 100px;
-    background-color: #fff570;
-    color: #020009;
+    background-color: #de5fbe;
+    color: #6d3088;
     font-weight: bold;
     transition: all 0.5s;
     -webkit-transition: all 0.5s;
@@ -298,20 +297,6 @@ transition: transform 0.3s ease;
 
 .nosel {
     user-select: none;
-}
-
-.shopitem {
-    margin-top: 5px;
-    padding: 10px 10px;
-    border: 0;
-    border-radius: 10px;
-    background-color: #fff570;
-    color: #020009;
-    font-weight: bold;
-    transition: all 0.5s;
-    -webkit-transition: all 0.5s;
-    cursor: pointer;
-    text-align: center;
 }
 
     </style>
@@ -365,7 +350,7 @@ transition: transform 0.3s ease;
 </nav>
 
             <p id="introduction">
-                StarBox is a modification of UltraBox that tries to add features found in other mods alongside some of its own. You can find the full feature set <a href="./StarBox-features" target="_blank" rel="noopener noreferrer">here</a> This mod is based off of UltraBox. You can find UltraBox <a href="https://ultraabox.github.io" target="_blank" rel="noopener noreferrer">here</a>
+                StarBox is a modification of Slarmoo's box that tries to add features found in other mods alongside some of its own. You can find the full feature set <a href="./StarBox-features" target="_blank" rel="noopener noreferrer">here</a> This mod is based off of Slarmoo's box. You can find Slarmoo's box <a href="https://slarmoo.github.io/slarmoosbox/website/" target="_blank" rel="noopener noreferrer">here</a>
 				<br><br>
                 It takes elements from most of the beepbox mods available (see <a href="./credits" target="_blank" rel="noopener noreferrer">credits</a>) and puts them in one convenient package.
             </p>
@@ -514,31 +499,128 @@ transition: transform 0.3s ease;
 </div>
 <script type="text/javascript">
 
+    var time = new Date(); 
+
+            var timeOffset = 0;
+
+            var AMPM = "AM"
+
+            var timeHours = time.getHours();
+            var timeMinutes = time.getMinutes();
+            var timeMinutesExt = "0";
+            if (timeHours > 12) {
+                timeOffset = 12;
+                AMPM = "PM";
+            } else {
+                timeOffset = 0;
+                AMPM = "AM";
+            }
+
+            if (timeMinutes < 10) {
+                timeMinutesExt = "0";
+            } else {
+                timeMinutesExt = "";
+            }
+
+            var timeNum = (timeHours-timeOffset)+":"+timeMinutesExt+timeMinutes+" "+AMPM;
     // Randomize display of header
 
     const plants = [
-        // jummbox/goldbox plants    
-        "🍂", "🌿", "🌺", "🍃", "🍄", "🍀🌷", " 1️⃣3️⃣1️⃣2️⃣", "🌈🍂🍁🍀🌷🍄🐲🌈🍃🌺🍄",
+        // jummbox/goldbox plants
+        "🍂",
+        "🌿",
+        "🌺",
+        "🍃",
+        "🍄",
+        "🍀🌷",
+        " 1️⃣3️⃣1️⃣2️⃣",
+        "🌈🍂🍁🍀🌷🍄🐲🌈🍃🌺🍄",
+
         // blubox plants
-        "≽(◕ ᴗ ◕)≼", "≽(ᴗ _ ᴗ)≼", "≽(⌐ _ ⌐)≼", "≽(ᵕ ‿ ᵕ)≼", 
+        "≽(◕ ᴗ ◕)≼",
+        "≽(ᴗ _ ᴗ)≼",
+        "≽(⌐ _ ⌐)≼",
+        "≽(ᵕ ‿ ᵕ)≼",
+
         // familiarbox plant (there were others, but the code of familiarbox is long gone)
         "☀️⭐🕒👁️",
+
         // suggested by mel, meant to supplement the lack of a worm logo
         "🪱",
+
         // plant originally suggested by mel in reference to the "(don't) eat thegubbys" meme
         "🐟",
+        
         // blubox desktop plants 
-        "⚡", "🔵", "💫",
+        "⚡",
+        "🔵",
+        "💫",
+
         // dogebox2 plants 
-        "🍕", '<img id="Hotdog" src="theme_resources/hotdog.png" width="62.5" height="41.625" onclick="myFunction()"> <audio id="squish1" src="media/squish1.mp3" type="audio/mpeg"></audio><audio id="squish2" src="media/squish2.mp3" type="audio/mpeg"></audio><audio id="squish3" src="media/squish3.mp3" type="audio/mpeg"></audio>', "🍔", "🍟",
+        "🍕",
+        '<img id="Hotdog" src="theme_resources/hotdog.png" width="62.5" height="41.625" onclick="myFunction()"> <audio id="squish1" src="media/squish1.mp3" type="audio/mpeg"></audio><audio id="squish2" src="media/squish2.mp3" type="audio/mpeg"></audio><audio id="squish3" src="media/squish3.mp3" type="audio/mpeg"></audio>', "🍔", "🍟",
         // Slarmoo's Box plants
-        "✨","🌈","🌧️","🪨","🐍","🌲","🌳","𓆏","🦀","🍄‍🟫","🌵","and Bobby","🥚",
-        // StarBox 
+        "✨",
+        "🌈",
+        "🌧️",
+        "🪨",
+        "🐍",
+        "🌲",
+        "🌳",
+        "𓆏",
+        "🦀",
+        "🍄‍🟫",
+        "🌵",
+        "and Bobby",
+        "🥚",
+        "🌾",
+        "🎍",
+        "🐳",
+        "🪸",
+        "🐚",
+        "🍂🍁",
+        "🪸🪸🫧🐙🐡🐠🐠🫧🐟",
+        // D's Quick Box Mod
+        "☠︎", "plant id: 36", "you're really lucky if you get this plant",
+        // StarBox
         "🍋",
-        `<div class="logo-wrapper">
-        <img src="theme_resources/StarBoxLogo.png" alt="StarBox" class="logo lemon nosel" height="64px" onclick="lemonClicker(event)">
-        <img src="theme_resources/StarBoxLogo.png" alt="" class="logo-glow lemon nosel" height="64px" onclick="lemonClicker(event)" aria-hidden="true">
-        </div>`,'<img id="Hotdog" src="theme_resources/hotdog.png" width="62.5" height="41.625" onclick="myFunction()"> <audio id="squish1" src="media/squish1.mp3" type="audio/mpeg"></audio><audio id="squish2" src="media/squish2.mp3" type="audio/mpeg"></audio><audio id="squish3" src="media/squish3.mp3" type="audio/mpeg"></audio>',"asdfjoiksop! ,!!","Hi! I'm Mr. Buying!","i am in StarBox"
+        '<img id="Hotdog" src="theme_resources/hotdog.png" width="62.5" height="41.625" onclick="myFunction()"> <audio id="squish1" src="media/squish1.mp3" type="audio/mpeg"></audio><audio id="squish2" src="media/squish2.mp3" type="audio/mpeg"></audio><audio id="squish3" src="media/squish3.mp3" type="audio/mpeg"></audio>',
+         "goober was here >:3",
+         "It is currently "+timeNum+" right now!",
+         "LemonLime was here",
+         "🍪 (does nothing)",
+         "Midge 🐈 :)",
+         "nulsika wants to be here",
+         "Preheat the oven to 450F",
+         "Place TheGubbys into the oven",
+         "I use Arch btw",
+         "!green2",
+         "😔",
+         "Calico :3",
+         "Hello :D",
+         "Music time!!",
+         "let's finish this song.",
+         "C418 🔥🔥🔥",
+         '<img src="media/true.png" width="48" height="48">',
+         '<img src="media/eeheehee.png" width="48" height="48">',
+         "BeepBox radio every week!",
+         "Flamin' Hot",
+         "Join the BeepBox discord!",
+         "What's BeepBox?",
+         "🥀",
+         "You should try eating fish!",
+         "burger",
+         "chezburger",
+         ":3",
+         ":p",
+         ":)",
+         "^w^",
+         ":o",
+         "Can I has chezburger plz?",
+         "what is BeepBox?",
+         "Join the !yellow1 gang!",
+         'hi nulsika <img src="media/eeheehee.png" width="48" height="48">',
+         '<img src="media/frisky.png" width="48" height="48" onclick="myFunction()"> <audio id="squish1" src="media/squish1.mp3" type="audio/mpeg"></audio><audio id="squish2" src="media/squish2.mp3" type="audio/mpeg"></audio><audio id="squish3" src="media/squish3.mp3" type="audio/mpeg"></audio>s>'
     ];
                                                                                                                                                                                                                                                                                                                                             // User suggested plants
 const date = new Date();
@@ -573,11 +655,11 @@ const date = new Date();
         }
     
 
-    // LB birthday (Jan 7th)
+    // SB birthday (Jan 7th)
     if ((date.getDate() == 7) && date.getMonth() == 0) {
-        document.getElementById("goldboxPlant").innerHTML = "  🍋📦🎂🎉 :D";  
+        document.getElementById("goldboxPlant").innerHTML = '<img src="media/frisky.png" width="48" height="48" alt="StarBox\'s birthday"> 🎂🎉 :D';
     }
-    // StarBox's dev birthday :3
+    // LemmBox's dev birthday :3
     if ((date.getDate() == 16) && date.getMonth() == 0) {
         document.getElementById("goldboxPlant").innerHTML = "  🍋🍋‍🟩🎂🎉 :3";  
     }
@@ -601,7 +683,6 @@ const date = new Date();
         document.getElementById("keyboard-instructions").style.display = "none";
         document.getElementById("mobile-instructions").style.display = "";
         document.getElementById("bar-editing").innerHTML = "Tap the boxes to move to a different part of the song, or tap on the currently selected box to swap which pattern is played during that part of the song.";
-        //document.getElementById("offline-instructions").innerHTML = 'You can use UltraBox when your device is offline if you put a shortcut to UltraBox on your home screen. <ul><li>Chrome: find the "Add to Home Screen" option in the ⋮ menu.</li><li>Firefox: find the "Add Page Shortcut" option in the ⋮ menu.</li><li>Safari: find the "Add to Home Screen" option in the bookmark menu.</li></ul>';
     }
 
     function browserHasRequiredFeatures() {

@@ -4414,7 +4414,7 @@ export class Song {
         } else if (variantTest == 0x73) { //"s"
             fromSlarmoosBox = true
             charIndex++;
-        } else if (variantTest == 0x4a) { //"J"
+        } else if (variantTest == 0x78) { //"x"
             fromStarBox = true
             charIndex++;
         } else {

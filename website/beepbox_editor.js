@@ -15727,7 +15727,7 @@ li.select2-results__option[role=group] > strong:hover {
                 fromSlarmoosBox = true;
                 charIndex++;
             }
-            else if (variantTest == 0x4a) {
+            else if (variantTest == 0x78) {
                 fromStarBox = true;
                 charIndex++;
             }

@@ -6685,7 +6685,7 @@ var beepbox = (function (exports) {
                 fromSlarmoosBox = true;
                 charIndex++;
             }
-            else if (variantTest == 0x4a) {
+            else if (variantTest == 0x78) {
                 fromStarBox = true;
                 charIndex++;
             }

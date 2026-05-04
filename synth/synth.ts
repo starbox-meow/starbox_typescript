@@ -1,12 +1,14 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
-import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeNoteRange, effectsIncludeRingModulation, effectsIncludeGranular, OperatorWave, LFOEnvelopeTypes, RandomEnvelopeTypes, GranularEnvelopeType, calculateRingModHertz, effectsIncludePhaser, effectsIncludeInvertWave } from "./SynthConfig";
+import { startLoadingSample, sampleLoadingState, SampleLoadingState, sampleLoadEvents, SampleLoadedEvent, SampleLoadingStatus, loadBuiltInSamples, Dictionary, DictionaryArray, toNameMap, FilterType, SustainType, EnvelopeType, InstrumentType, EffectType, EnvelopeComputeIndex, Transition, Unison, Chord, Vibrato, Envelope, AutomationTarget, Config, getDrumWave, drawNoiseSpectrum, getArpeggioPitchIndex, performIntegralOld, getPulseWidthRatio, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeNoteRange, effectsIncludeRingModulation, effectsIncludeGranular, OperatorWave, LFOEnvelopeTypes, RandomEnvelopeTypes, GranularEnvelopeType, calculateRingModHertz, effectsIncludePhaser, effectsIncludeInvertWave, effectsIncludeCompressor } from "./SynthConfig";
 import { Preset, EditorConfig } from "../editor/EditorConfig";
 import { scaleElementsByFactor, inverseRealFourierTransform } from "./FFT";
 import { Deque } from "./Deque";
 import { events } from "../global/Events";
 import { FilterCoefficients, FrequencyResponse, DynamicBiquadFilter, warpInfinityToNyquist } from "./filtering";
 import { xxHash32 } from "js-xxhash";
+
+import * as rustDsp from "../rust_dsp/pkg/rust_dsp";
 
 declare global {
     interface Window {
@@ -1591,6 +1593,23 @@ interface HeldMod {
     holdFor: number;
 }
 
+export interface JsCompressorParams {
+  mode: "simple" | "advanced";
+  hidden: boolean,
+
+  attack: number;
+  decay: number;
+  threshold: number;
+  ratioDown: number;
+  ratioUp: number;
+  freqLoMid: number;
+  freqMidHi: number;
+
+  gainLo: number;
+  gainMid: number;
+  gainHi: number;
+}
+
 export class Instrument {
     public type: InstrumentType = InstrumentType.chip;
     public preset: number = 0;
@@ -1667,7 +1686,23 @@ export class Instrument {
     public granular: number = 4;
     public grainSize: number = (Config.grainSizeMax - Config.grainSizeMin) / Config.grainSizeStep;
     public grainAmounts: number = Config.grainAmountsMax;
-    public grainRange: number = 40;
+    public grainRange: number = 40
+    public compressor: JsCompressorParams = {
+      mode: "simple",
+      hidden: false,
+  
+      attack: 5,
+      decay: 5,
+      threshold: -5,
+      ratioDown: 5,
+      ratioUp: 2,
+      freqLoMid: 300,
+      freqMidHi: 2000,
+  
+      gainLo: 4,
+      gainMid: 6,
+      gainHi: 8,
+    };
     public chorus: number = 0;
     public reverb: number = 0;
     public echoSustain: number = 0;
@@ -3274,7 +3309,7 @@ export class Song {
     private static readonly _oldestSlarmoosBoxVersion: number = 1;
     private static readonly _latestSlarmoosBoxVersion: number = 5;
     private static readonly _oldestStarBoxVersion: number = 1;
-    private static readonly _latestStarBoxVersion: number = 4;
+    private static readonly _latestStarBoxVersion: number = 5;
     // One-character variant detection at the start of URL to distinguish variants such as JummBox, Or Goldbox. "j" and "g" respectively
     //also "u" is ultrabox lol
     private static readonly _variant = 0x78; //"x" - StarBox
@@ -3754,9 +3789,10 @@ export class Song {
                     }
                 }
 
-                // The list of enabled effects is represented as a 14-bit bitfield using two six-bit characters.
+                // The list of enabled effects is represented as a 24-bit bitfield using four six-bit characters.
                 buffer.push(
                     SongTagCode.effects, 
+                    base64IntToCharCode[(instrument.effects >> 18) & 63], 
                     base64IntToCharCode[(instrument.effects >> 12) & 63], 
                     base64IntToCharCode[(instrument.effects >> 6) & 63], 
                     base64IntToCharCode[instrument.effects & 63]
@@ -3876,6 +3912,11 @@ export class Song {
                 if (effectsIncludeNoteRange(instrument.effects)) {
                     buffer.push(base64IntToCharCode[instrument.upperNoteLimit >> 6], base64IntToCharCode[instrument.upperNoteLimit & 0x3f]);
                     buffer.push(base64IntToCharCode[instrument.lowerNoteLimit >> 6], base64IntToCharCode[instrument.lowerNoteLimit & 0x3f]);
+                }
+                if (effectsIncludeCompressor(instrument.effects)) {
+                  const encoded = encodeURIComponent(JSON.stringify(instrument.compressor));
+                  buffer.push(base64IntToCharCode[encoded.length >> 6], base64IntToCharCode[encoded.length & 0x3f]);
+                  buffer.push(...Array.from(encoded, ch => ch.charCodeAt(0)))
                 }
 
                 if (instrument.type != InstrumentType.drumset) {
@@ -5499,9 +5540,15 @@ export class Song {
                     const legacySettings: LegacySettings = legacySettingsCache![instrumentChannelIterator][instrumentIndexIterator];
                     instrument.convertLegacySettings(legacySettings, forceSimpleFilter);
                 } else {
-                    // BeepBox currently uses three base64 characters at 6 bits each for a bitfield representing all the enabled effects.
-                    if (EffectType.length > 18) throw new Error();
-                    if (fromStarBox || (fromSlarmoosBox && !beforeFive)) {
+                    // BeepBox currently uses four base64 characters at 6 bits each for a bitfield representing all the enabled effects.
+                    if (EffectType.length > 24) throw new Error();
+                    if (fromStarBox && !beforeFive) {
+                      instrument.effects =
+                        (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 18) |
+                        (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 12) |
+                        (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) |
+                        (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
+                    }else if (fromStarBox || fromSlarmoosBox && !beforeFive) {
                         instrument.effects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 12) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
                     } else {
                         instrument.effects = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | (base64CharCodeToInt[compressed.charCodeAt(charIndex++)]);
@@ -5675,6 +5722,10 @@ export class Song {
                     if (effectsIncludeNoteRange(instrument.effects)) {
                         instrument.upperNoteLimit = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
                         instrument.lowerNoteLimit = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) + base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                    }
+                    if (effectsIncludeCompressor(instrument.effects)) {
+                      const length = (base64CharCodeToInt[compressed.charCodeAt(charIndex++)] << 6) | base64CharCodeToInt[compressed.charCodeAt(charIndex++)];
+                      instrument.compressor = JSON.parse(decodeURIComponent(compressed.substring(charIndex, charIndex += length)));
                     }
                 }
                 // Clamp the range.
@@ -8626,6 +8677,9 @@ class InstrumentState {
     public readonly releasedTones: Deque<Tone> = new Deque<Tone>(); // Tones that are in the process of fading out after the corresponding notes ended.
     public readonly liveInputTones: Deque<Tone> = new Deque<Tone>(); // Tones that are initiated by a source external to the loaded song data.
 
+    // Each instrument has at most one compressor instance. (For now.)
+    public compressor: rustDsp.CompressorInstance | undefined;
+
     public type: InstrumentType = InstrumentType.chip;
     public synthesizer: Function | null = null;
     public wave: Float32Array | null = null;
@@ -9026,6 +9080,7 @@ class InstrumentState {
         const usesEcho: boolean = effectsIncludeEcho(this.effects);
         const usesReverb: boolean = effectsIncludeReverb(this.effects);
         const usesPhaser: boolean = effectsIncludePhaser(this.effects);
+        const usesCompressor: boolean = effectsIncludeCompressor(this.effects);
         
         let granularChance: number = 0;
         if (usesGranular) { //has to happen before buffer allocation
@@ -9548,6 +9603,45 @@ class InstrumentState {
             this.reverbShelfB0 = Synth.tempFilterStartCoefficients.b[0];
             this.reverbShelfB1 = Synth.tempFilterStartCoefficients.b[1];
         }
+      
+      if (usesCompressor && this.compressor) {
+        const { start, end } = this.compressor, params = instrument.compressor;
+        
+        // copied from cy!box
+        function gainToMultiplier(volume: number): number {
+          // below -35 dB, linearly fade out to 0
+          let fadeout = (volume + 40.0) * (1.0 / 5.0);
+          return fadeout <= 0 ? 0 : Math.min(1, fadeout) * 10 ** (volume / 20);
+        }
+        function lerp(x: number, y: number, a: number) {
+          return x + (y - x) * a;
+        }
+        start.threshold = lerp(-10, params.threshold, envelopeStarts[EnvelopeComputeIndex.compressorThreshold]);
+        start.attack = params.attack * envelopeStarts[EnvelopeComputeIndex.compressorTime];
+        start.decay = params.decay * envelopeStarts[EnvelopeComputeIndex.compressorTime];
+        start.freq_lo_mid = params.freqLoMid;
+        start.freq_mid_hi = params.freqMidHi;
+        start.ratio_down = params.ratioDown * envelopeStarts[EnvelopeComputeIndex.compressorRatioDown];
+        start.ratio_up = params.ratioUp * envelopeStarts[EnvelopeComputeIndex.compressorRatioUp];
+        start.lo_gain = gainToMultiplier(params.gainLo) * envelopeStarts[EnvelopeComputeIndex.compressorLoGain];
+        start.mid_gain = gainToMultiplier(params.gainMid) * envelopeStarts[EnvelopeComputeIndex.compressorMidGain];
+        start.hi_gain = gainToMultiplier(params.gainHi) * envelopeStarts[EnvelopeComputeIndex.compressorHiGain];
+        
+        end.threshold = lerp(-10, params.threshold, envelopeStarts[EnvelopeComputeIndex.compressorThreshold]);
+        end.attack = params.attack * envelopeEnds[EnvelopeComputeIndex.compressorTime];
+        end.decay = params.decay * envelopeEnds[EnvelopeComputeIndex.compressorTime];
+        end.freq_lo_mid = params.freqLoMid;
+        end.freq_mid_hi = params.freqMidHi;
+        end.ratio_down = params.ratioDown * envelopeEnds[EnvelopeComputeIndex.compressorRatioDown];
+        end.ratio_up = params.ratioUp * envelopeEnds[EnvelopeComputeIndex.compressorRatioUp];
+        end.lo_gain = gainToMultiplier(params.gainLo) * envelopeEnds[EnvelopeComputeIndex.compressorLoGain];
+        end.mid_gain = gainToMultiplier(params.gainMid) * envelopeEnds[EnvelopeComputeIndex.compressorMidGain];
+        end.hi_gain = gainToMultiplier(params.gainHi) * envelopeEnds[EnvelopeComputeIndex.compressorHiGain];
+        
+        this.compressor.start = start;
+        this.compressor.end = end;
+        
+      }
 
         if (this.tonesAddedInThisTick) {
             this.attentuationProgress = 0.0;
@@ -9730,7 +9824,6 @@ class ChannelState {
 }
 
 export class Synth {
-
     private syncSongState(): void {
         const channelCount: number = this.song!.getChannelCount();
         for (let i: number = this.channels.length; i < channelCount; i++) {
@@ -14036,6 +14129,7 @@ export class Synth {
         const usesRingModulation: boolean = effectsIncludeRingModulation(instrumentState.effects);
         const usesPhaser: boolean = effectsIncludePhaser(instrumentState.effects);
         const usesInvertWave: boolean = effectsIncludeInvertWave(instrumentState.effects) && instrumentState.invertWave;
+        const usesCompressor: boolean = effectsIncludeCompressor(instrumentState.effects);
         let signature: number = 0; if (usesDistortion) signature = signature | 1;
         signature = signature << 1; if (usesBitcrusher) signature = signature | 1;
         signature = signature << 1; if (usesEqFilter) signature = signature | 1;
@@ -14047,10 +14141,23 @@ export class Synth {
         signature = signature << 1; if (usesRingModulation) signature = signature | 1;
         signature = signature << 1; if (usesPhaser) signature = signature | 1;
         signature = signature << 1; if (usesInvertWave) signature = signature | 1;
+        signature = signature << 1; if (usesCompressor) signature = signature | 1;
         
+        if (usesCompressor && instrumentState.compressor === undefined) {
+          // we don't know the buffer size beforehand, so just set it to the max possible (which is currently 4096).
+          instrumentState.compressor = new rustDsp.CompressorInstance(4096);
+        }
         let effectsFunction: Function = Synth.effectsFunctionCache[signature];
         if (effectsFunction == undefined) {
-            let effectsSource: string = "return (synth, outputDataL, outputDataR, bufferIndex, runLength, instrumentState) => {";
+          let effectsSource: string = "return (synth, outputDataL, outputDataR, bufferIndex, runLength, instrumentState) => {";
+
+          if (usesCompressor) {
+            effectsSource += `
+          const compressor = instrumentState.compressor;
+          const compBuf = compressor.get_buffer();
+          const compBufL = compBuf.subarray(0, runLength), compBufR = compBuf.subarray(compBuf.length / 2, compBuf.length / 2 + runLength);
+          `
+          }
 
             const usesDelays: boolean = usesChorus || usesReverb || usesEcho || usesGranular;
 
@@ -14645,22 +14752,40 @@ export class Synth {
 					reverb += reverbDelta;`
             }
 
+          if (usesCompressor) {
             effectsSource += `
-					
-					outputDataL[sampleIndex] += sampleL * mixVolume;
-					outputDataR[sampleIndex] += sampleR * mixVolume;
-					mixVolume += mixVolumeDelta;`
-
+  					compBufL[sampleIndex - bufferIndex] = sampleL;
+  					compBufR[sampleIndex - bufferIndex] = sampleR;
+  `;
+          } else {
+            effectsSource += `
+            outputDataL[sampleIndex] += sampleL * mixVolume;
+  					outputDataR[sampleIndex] += sampleR * mixVolume;
+  					mixVolume += mixVolumeDelta;
+       `;
+          }
+          
             if (usesDelays) {
                 effectsSource += `
 					
 					delayInputMult += delayInputMultDelta;`
             }
 
-            effectsSource += `
+          effectsSource += `
 				}
-				
-				instrumentState.mixVolume = mixVolume;
+				`;
+        if (usesCompressor) {
+          effectsSource += `
+          compressor.process(${synth.samplesPerSecond}, runLength);
+          
+          for (let i = 0; i < runLength; i++) {
+            outputDataL[bufferIndex + i] += compBufL[i] * mixVolume;
+            outputDataR[bufferIndex + i] += compBufR[i] * mixVolume;
+            mixVolume += mixVolumeDelta;
+          }`
+        }
+
+				effectsSource += ` instrumentState.mixVolume = mixVolume;
 				instrumentState.eqFilterVolume = eqFilterVolume;
 				
 				// Avoid persistent denormal or NaN values in the delay buffers and filter history.

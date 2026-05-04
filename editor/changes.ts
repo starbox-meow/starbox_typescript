@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 import { Algorithm, Dictionary, FilterType, SustainType, InstrumentType, EffectType, AutomationTarget, Config, effectsIncludeDistortion, LFOEnvelopeTypes, RandomEnvelopeTypes } from "../synth/SynthConfig";
-import { NotePin, Note, makeNotePin, Pattern, FilterSettings, FilterControlPoint, SpectrumWave, HarmonicsWave, Instrument, Channel, Song, Synth, clamp } from "../synth/synth";
+import { NotePin, Note, makeNotePin, Pattern, FilterSettings, FilterControlPoint, SpectrumWave, HarmonicsWave, Instrument, Channel, Song, Synth, clamp, JsCompressorParams } from "../synth/synth";
 import { Preset, PresetCategory, EditorConfig } from "./EditorConfig";
 import { Change, ChangeGroup, ChangeSequence, UndoableChange } from "./Change";
 import { SongDocument } from "./SongDocument";
@@ -2734,6 +2734,27 @@ export class ChangeGrainRange extends ChangeInstrumentSlider {
         // doc.synth.unsetMod(Config.modulators.dictionary["grain size"].index, doc.channel, doc.getCurrentInstrument());
         if (oldValue != newValue) this._didSomething();
     }
+}
+
+export class ChangeCompressor<K extends keyof JsCompressorParams> extends ChangeInstrumentSlider {
+    constructor(doc: SongDocument, property: K, oldValue: JsCompressorParams[K], newValue: JsCompressorParams[K]) {
+        super(doc);
+        this._instrument.compressor[property] = newValue;
+        if (property === "freqLoMid" && this._instrument.compressor.freqMidHi < (newValue as number))
+          this._instrument.compressor.freqMidHi = newValue as number;
+        else if (property === "freqMidHi" && this._instrument.compressor.freqLoMid > (newValue as number))
+          this._instrument.compressor.freqLoMid = newValue as number;
+        doc.notifier.changed();
+        if (oldValue != newValue) this._didSomething();
+    }
+}
+export class ChangeCompressorTime extends ChangeInstrumentSlider {
+  constructor(doc: SongDocument, oldValue: number, newValue: number) {
+      super(doc);
+      this._instrument.compressor.attack = this._instrument.compressor.decay = newValue;
+      doc.notifier.changed();
+      if (oldValue != newValue) this._didSomething();
+  }
 }
 
 export class ChangeDistortion extends ChangeInstrumentSlider {

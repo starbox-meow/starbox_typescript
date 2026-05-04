@@ -13,6 +13,8 @@ npx rollup build/player/main.js \
 	--sourcemap \
 	--plugin @rollup/plugin-node-resolve
 
+exec $(dirname $(realpath $0))/debugify.sh
+
 # Minify website/player/beepbox_player.js into website/player/beepbox_player.min.js
 npx terser \
 	./website/player/beepbox_player.js \

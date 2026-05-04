@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2022 John Nesky and contributing authors, distributed under the MIT license, see accompanying the LICENSE.md file.
 
 //import {Layout} from "./Layout";
-import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz, effectsIncludePhaser, effectsIncludeInvertWave, effectsIncludeNoteRange } from "../synth/SynthConfig";
+import { sampleLoadEvents, SampleLoadedEvent, InstrumentType, EffectType, Config, effectsIncludeTransition, effectsIncludeChord, effectsIncludePitchShift, effectsIncludeDetune, effectsIncludeVibrato, effectsIncludeNoteFilter, effectsIncludeDistortion, effectsIncludeBitcrusher, effectsIncludePanning, effectsIncludeChorus, effectsIncludeEcho, effectsIncludeReverb, effectsIncludeRingModulation, effectsIncludeGranular, DropdownID, calculateRingModHertz, effectsIncludePhaser, effectsIncludeInvertWave, effectsIncludeNoteRange, effectsIncludeCompressor } from "../synth/SynthConfig";
 import { BarScrollBar } from "./BarScrollBar";
 import { BeatsPerBarPrompt } from "./BeatsPerBarPrompt";
 import { Change, ChangeGroup } from "./Change";
@@ -19,7 +19,7 @@ import { Instrument, Channel, Synth } from "../synth/synth";
 import { HTML, SVG } from "imperative-html/dist/esm/elements-strict";
 import { Preferences } from "./Preferences";
 import { HarmonicsEditor, HarmonicsEditorPrompt } from "./HarmonicsEditor";
-import { InputBox, Slider } from "./HTMLWrapper";
+import { InputBox, Knob, LabeledSlider, Slider } from "./HTMLWrapper";
 import { ImportPrompt } from "./ImportPrompt";
 import { ChannelRow } from "./ChannelRow";
 import { LayoutPrompt } from "./LayoutPrompt";
@@ -46,7 +46,7 @@ import { SpectrumEditor, SpectrumEditorPrompt } from "./SpectrumEditor";
 import { CustomThemePrompt } from "./CustomThemePrompt";
 import { ThemePrompt } from "./ThemePrompt";
 import { TipPrompt } from "./TipPrompt";
-import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangePhaserMix, ChangePhaserFreq, ChangePhaserFeedback, ChangePhaserStages, ChangeInvertWave, ChangeUpperLimit, ChangeLowerLimit } from "./changes";
+import { ChangeTempo, ChangeKeyOctave, ChangeChorus, ChangeEchoDelay, ChangeEchoSustain, ChangeReverb, ChangeVolume, ChangePan, ChangePatternSelection, ChangePatternsPerChannel, ChangePatternNumbers, ChangeSupersawDynamism, ChangeSupersawSpread, ChangeSupersawShape, ChangePulseWidth, ChangeFeedbackAmplitude, ChangeOperatorAmplitude, ChangeOperatorFrequency, ChangeDrumsetEnvelope, ChangePasteInstrument, ChangePreset, pickRandomPresetValue, ChangeRandomGeneratedInstrument, ChangeEQFilterType, ChangeNoteFilterType, ChangeEQFilterSimpleCut, ChangeEQFilterSimplePeak, ChangeNoteFilterSimpleCut, ChangeNoteFilterSimplePeak, ChangeScale, ChangeDetectKey, ChangeKey, ChangeRhythm, ChangeFeedbackType, ChangeAlgorithm, ChangeChipWave, ChangeNoiseWave, ChangeTransition, ChangeToggleEffects, ChangeVibrato, ChangeUnison, ChangeChord, ChangeSong, ChangePitchShift, ChangeDetune, ChangeDistortion, ChangeStringSustain, ChangeBitcrusherFreq, ChangeBitcrusherQuantization, ChangeAddEnvelope, ChangeEnvelopeSpeed, ChangeAddChannelInstrument, ChangeRemoveChannelInstrument, ChangeCustomWave, ChangeOperatorWaveform, ChangeOperatorPulseWidth, ChangeSongTitle, ChangeVibratoDepth, ChangeVibratoSpeed, ChangeVibratoDelay, ChangeVibratoType, ChangePanDelay, ChangeArpeggioSpeed, ChangeFastTwoNoteArp, ChangeClicklessTransition, ChangeAliasing, ChangeSetPatternInstruments, ChangeHoldingModRecording, ChangeChipWavePlayBackwards, ChangeChipWaveStartOffset, ChangeChipWaveLoopEnd, ChangeChipWaveLoopStart, ChangeChipWaveLoopMode, ChangeChipWaveUseAdvancedLoopControls, ChangeDecimalOffset, ChangeUnisonVoices, ChangeUnisonSpread, ChangeUnisonOffset, ChangeUnisonExpression, ChangeUnisonSign, Change6OpFeedbackType, Change6OpAlgorithm, ChangeCustomAlgorythmorFeedback, ChangeRingMod, ChangeRingModHz, ChangeRingModChipWave, ChangeRingModPulseWidth, ChangeGranular, ChangeGrainSize, ChangeGrainAmounts, ChangeGrainRange, ChangeMonophonicTone, ChangePhaserMix, ChangePhaserFreq, ChangePhaserFeedback, ChangePhaserStages, ChangeInvertWave, ChangeUpperLimit, ChangeLowerLimit, ChangeCompressor, ChangeCompressorTime } from "./changes";
 
 import { TrackEditor } from "./TrackEditor";
 import { oscilloscopeCanvas } from "../global/Oscilloscope";
@@ -881,6 +881,59 @@ export class SongEditor {
         this._grainSizeSliderRow,
         this._grainRangeSliderRow
     );
+  
+    private readonly _compressorSimpleButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "no-underline", onclick: () => this._switchCompressorMode("simple") }, "simple");
+    private readonly _compressorAdvancedButton: HTMLButtonElement = button({ style: "font-size: x-small; width: 50%; height: 40%", class: "last-button no-underline", onclick: () => this._switchCompressorMode("advanced") }, "advanced");
+    private readonly _compressorTypeRow: HTMLElement = div({ class: "selectRow", style: "padding-top: 4px; margin-bottom: 0px;" }, span("Type:"), div({ class: "instrument-bar" }, this._compressorSimpleButton, this._compressorAdvancedButton));
+    
+    private readonly _compressorThresholdSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "-10", max: "-5", step: "any" }), this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "threshold", oldValue, newValue), false);
+  
+    private readonly _compressorRatioDownKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "ratioDown", oldValue, newValue), { min: 1, max: 100, mapping: "logarithmic", label: "Down", unit: ":1" });
+    private readonly _compressorRatioUpKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "ratioUp", oldValue, newValue), { min: 1, max: 100, mapping: "logarithmic", label: "Up", unit: ":1" });
+    private readonly _compressorTimeKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressorTime(this.doc, oldValue, newValue), { min: 0.01, max: 1000, mapping: "logarithmic", label: "Time" });
+    private readonly _compressorAttackKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "attack", oldValue, newValue), { min: 0.001, max: 10000, mapping: "logarithmic", label: "Attack" });
+    private readonly _compressorDecayKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "decay", oldValue, newValue), { min: 0.001, max: 10000, mapping: "logarithmic", label: "Decay" });
+    private readonly _compressorLoMidKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "freqLoMid", oldValue, newValue), { min: 100, max: 10000, mapping: "logarithmic", label: "lo/mid", unit: "Hz", precision: 0 });
+    private readonly _compressorMidHiKnob: Knob = new Knob(this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "freqMidHi", oldValue, newValue), { min: 100, max: 10000, mapping: "logarithmic", label: "mid/hi", unit: "Hz", precision: 0 });
+
+    private readonly _compressorLoGainSlider: LabeledSlider = new LabeledSlider(input({ type: "range", min: "-20", max: "20", step: "any" }), this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "gainLo", oldValue, newValue), { vertical: true, label: "Low", unit: "dB" });
+    private readonly _compressorMidGainSlider: LabeledSlider = new LabeledSlider(input({ type: "range", min: "-20", max: "20", step: "any" }), this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "gainMid", oldValue, newValue), { vertical: true, label: "Mid", unit: "dB" });
+    private readonly _compressorHiGainSlider: LabeledSlider = new LabeledSlider(input({ type: "range", min: "-20", max: "20", step: "any" }), this.doc, (oldValue: number, newValue: number) => new ChangeCompressor(this.doc, "gainHi", oldValue, newValue), { vertical: true, label: "High", unit: "dB" });
+    
+    private readonly _compressorKnobContainer: HTMLDivElement = div(
+      { class: "compressorKnobContainer" },
+      this._compressorAttackKnob.container,
+      this._compressorTimeKnob.container,
+      this._compressorRatioDownKnob.container,
+      this._compressorRatioUpKnob.container,
+      this._compressorDecayKnob.container,
+      this._compressorLoMidKnob.container,
+      this._compressorMidHiKnob.container,
+    );
+  
+    private readonly _compressorGainSliderContainer: HTMLDivElement = div(
+      { class: "compressorGainSliderContainer" },
+      this._compressorLoGainSlider.container,
+      this._compressorMidGainSlider.container,
+      this._compressorHiGainSlider.container,
+    )
+  
+    private readonly _compressorCollapseButton: HTMLButtonElement = button({ style: "margin-inline: 1ch; height: 1.5em; width: 10px; padding: 0px; font-size: 8px; display: inline;" }, "▼")
+  
+    private readonly _compressorTitleContainer: HTMLDivElement = div(
+      { class: "compressorTitleContainer", onclick: () => this._toggleCompressorVisible() },
+      "compressor",
+      this._compressorCollapseButton,
+    );
+  
+    private readonly _compressorContainerRow: HTMLDivElement = div(
+      { class: "compressorContainer" },
+      this._compressorTypeRow,
+      div({ class: "selectRow" }, span("Threshold:"), this._compressorThresholdSlider.container),
+      this._compressorKnobContainer,
+      this._compressorGainSliderContainer,
+    );
+
     private readonly _echoSustainSlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoSustainRange - 1, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEchoSustain(this.doc, oldValue, newValue), false);
     private readonly _echoSustainRow: HTMLDivElement = div({ class: "selectRow" }, span({ class: "tip", onclick: () => this._openPrompt("echoSustain") }, "Echo:"), this._echoSustainSlider.container);
     private readonly _echoDelaySlider: Slider = new Slider(input({ style: "margin: 0;", type: "range", min: "0", max: Config.echoDelayRange - 1, value: "0", step: "1" }), this.doc, (oldValue: number, newValue: number) => new ChangeEchoDelay(this.doc, oldValue, newValue), false);
@@ -1256,6 +1309,8 @@ export class SongEditor {
         this._upperNoteLimitRow,
         this._lowerNoteLimitRow,
         this._granularContainerRow,
+        this._compressorTitleContainer,
+        this._compressorContainerRow,
         div({ style: `padding: 2px 0; margin-left: 2em; display: flex; align-items: center;` },
             span({ style: `flex-grow: 1; text-align: center;` }, span({ class: "tip", onclick: () => this._openPrompt("envelopes") }, "Envelopes")),
             this._envelopeDropdown,
@@ -1946,6 +2001,11 @@ export class SongEditor {
             target.textContent = "▼";
             group.style.display = "none";
         }
+    }
+  
+    private _toggleCompressorVisible(): void {
+      const instrument = this.doc.song.channels[this.doc.channel].instruments[this.doc.getCurrentInstrument()];
+      this.doc.record(new ChangeCompressor(this.doc, "hidden", instrument.compressor.hidden, !instrument.compressor.hidden));
     }
 
     private _modSliderUpdate(): void {
@@ -3026,6 +3086,47 @@ export class SongEditor {
                 this._invertWaveRow.style.display = "";
             } else {
                 this._invertWaveRow.style.display = "none";
+            }
+          
+            if (effectsIncludeCompressor(instrument.effects)) {
+              this._compressorContainerRow.style.display = this._compressorTitleContainer.style.display = "";
+              
+              const { hidden, mode, attack, decay, threshold, ratioDown, ratioUp, freqLoMid, freqMidHi, gainLo, gainMid, gainHi } = instrument.compressor;
+              
+              this._compressorCollapseButton.textContent = hidden ? "▲" : "▼";
+              this._compressorContainerRow.style.display = hidden ? "none" : "";
+              
+              const simpleOnly = [this._compressorTimeKnob];
+              const advancedOnly = [this._compressorAttackKnob, this._compressorDecayKnob, this._compressorLoMidKnob, this._compressorMidHiKnob];
+              
+              if (mode === "simple") {
+                this._compressorSimpleButton.classList.remove("deactivated");
+                this._compressorAdvancedButton.classList.add("deactivated");
+                simpleOnly.forEach(el => el.container.style.display = "");
+                advancedOnly.forEach(el => el.container.style.display = "none");
+                // merge attack & decay
+                const time = Math.sqrt(instrument.compressor.attack * instrument.compressor.decay);
+                instrument.compressor.attack = instrument.compressor.decay = time;
+                this._compressorTimeKnob.updateValue(time);
+              } else {
+                this._compressorSimpleButton.classList.add("deactivated");
+                this._compressorAdvancedButton.classList.remove("deactivated");
+                simpleOnly.forEach(el => el.container.style.display = "none");
+                advancedOnly.forEach(el => el.container.style.display = "");
+              }
+              this._compressorThresholdSlider.updateValue(threshold);
+              this._compressorAttackKnob.updateValue(attack);
+              this._compressorDecayKnob.updateValue(decay);
+              this._compressorRatioDownKnob.updateValue(ratioDown);
+              this._compressorRatioUpKnob.updateValue(ratioUp);
+              this._compressorLoMidKnob.updateValue(freqLoMid);
+              this._compressorMidHiKnob.updateValue(freqMidHi);
+              
+              this._compressorLoGainSlider.updateValue(gainLo);
+              this._compressorMidGainSlider.updateValue(gainMid);
+              this._compressorHiGainSlider.updateValue(gainHi);
+            } else {
+              this._compressorContainerRow.style.display = this._compressorTitleContainer.style.display = "none";
             }
 
             if (effectsIncludeNoteRange(instrument.effects)) {
@@ -5235,6 +5336,14 @@ export class SongEditor {
         }
     }
 
+    private _switchCompressorMode(mode: "simple" | "advanced") {
+        const channel: Channel = this.doc.song.channels[this.doc.channel];
+        const instrument: Instrument = channel.instruments[this.doc.getCurrentInstrument()];
+        if (instrument.compressor.mode != mode) {
+            this.doc.record(new ChangeCompressor(this.doc, "mode", instrument.compressor.mode, mode));
+        }
+    }
+  
     private _randomPreset(): void {
         const isNoise: boolean = this.doc.song.getChannelIsNoise(this.doc.channel);
         this.doc.record(new ChangePreset(this.doc, pickRandomPresetValue(isNoise,this.doc.prefs.rollNoveltyPresets)));

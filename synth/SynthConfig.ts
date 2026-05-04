@@ -120,6 +120,7 @@ export const enum EffectType {
     phaser,
     octaveShift, //Studio Box port placeholder just in case
     invertWave,
+    compressor,
     length,
 }
 
@@ -164,6 +165,14 @@ export const enum EnvelopeComputeIndex {
     phaserFeedback,
     phaserStages,
     invertWave,
+    
+    compressorThreshold,
+    compressorTime,
+    compressorRatioDown,
+    compressorRatioUp,
+    compressorLoGain,
+    compressorMidGain,
+    compressorHiGain,
 
     length,
 }
@@ -1255,8 +1264,8 @@ export class Config {
         { name: "FART",             voices: 2, spread: 13,       offset: -5,      expression: 1.0,   sign: -3   },
         //for modbox; voices = riffapp, spread = intervals, offset = offsets, expression = volume, and sign = signs
     ]);
-    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "note range", "ring mod", "granular", "phaser", "", "invert wave"];
-    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.granular, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb, EffectType.ringModulation, EffectType.phaser, EffectType.invertWave, EffectType.noteRange];
+    public static readonly effectNames: ReadonlyArray<string> = ["reverb", "chorus", "panning", "distortion", "bitcrusher", "note filter", "echo", "pitch shift", "detune", "vibrato", "transition type", "chord type", "note range", "ring mod", "granular", "phaser", "", "invert wave", "compressor"];
+    public static readonly effectOrder: ReadonlyArray<EffectType> = [EffectType.panning, EffectType.transition, EffectType.chord, EffectType.pitchShift, EffectType.detune, EffectType.vibrato, EffectType.noteFilter, EffectType.granular, EffectType.distortion, EffectType.bitcrusher, EffectType.chorus, EffectType.echo, EffectType.reverb, EffectType.ringModulation, EffectType.phaser, EffectType.invertWave, EffectType.compressor, EffectType.noteRange];
     public static readonly noteSizeMax: number = 6;
     public static readonly volumeRange: number = 50;
     // Beepbox's old volume scale used factor -0.5 and was [0~7] had roughly value 6 = 0.125 power. This new value is chosen to have -21 be the same,
@@ -1880,6 +1889,13 @@ export class Config {
         {name: "mixVolume",              computeIndex: InstrumentAutomationIndex.mixVolume,              displayName: "mix volume",       perNote: false, interleave: false, isFilter: false, range: Config.volumeRange,                 maxCount: 1,    effect: null,                    compatibleInstruments: null},
         {name: "envelope#",              computeIndex: null,                                             displayName: "envelope",         perNote: false, interleave: false, isFilter: false, range: Config.defaultAutomationRange,      maxCount: Config.maxEnvelopeCount, effect: null, compatibleInstruments: null}, // maxCount special case for envelopes to be allowed to target earlier ones.
         */
+        { name: "compressorThreshold",    computeIndex: EnvelopeComputeIndex.compressorThreshold,       displayName: "comp. threshold",  perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorTime",         computeIndex: EnvelopeComputeIndex.compressorTime,            displayName: "comp. time",       perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorRatioDown",    computeIndex: EnvelopeComputeIndex.compressorRatioDown,       displayName: "comp. ratio down", perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorRatioUp",      computeIndex: EnvelopeComputeIndex.compressorRatioUp,         displayName: "comp. ratio up",   perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorLoGain",       computeIndex: EnvelopeComputeIndex.compressorLoGain,          displayName: "comp. low gain",   perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorMidGain",      computeIndex: EnvelopeComputeIndex.compressorMidGain,         displayName: "comp. mid gain",   perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
+        { name: "compressorHiGain",       computeIndex: EnvelopeComputeIndex.compressorHiGain,          displayName: "comp. high gain",  perNote: false, interleave: false, isFilter: false, maxCount: 1, effect: EffectType.compressor, compatibleInstruments: null },
     ]);
     public static readonly operatorWaves: DictionaryArray<OperatorWave> = toNameMap([
 		{ name: "sine", samples: Config.sineWave },
@@ -2583,4 +2599,7 @@ export function effectsIncludePhaser(effects: number): boolean {
 }
 export function effectsIncludeInvertWave(effects: number): boolean {
     return (effects & (1 << EffectType.invertWave)) != 0;
+}
+export function effectsIncludeCompressor(effects: number): boolean {
+    return (effects & (1 << EffectType.compressor)) != 0;
 }
